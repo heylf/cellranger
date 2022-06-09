@@ -53,19 +53,11 @@ ch_output_docs_images = file("$projectDir/docs/images/", checkIfExists: true)
  * Create a channel for input read files
  */
 if (params.input)  { ch_metadata = file(params.input, checkIfExists: true) } else { exit 1, "Please provide input file with sample metadata with the '--input' option." }
-if (params.index_file) {
-    Channel.from( ch_metadata )
-            .splitCsv(header: true, sep:'\t')
-            .map { col -> tuple("${col.GEM}", "${col.Sample}", "${col.Lane}", file("${col.R1}", checkifExists: true),file("${col.R2}", checkifExists: true), file("${col.I1}", checkifExists: true)) }
-            .dump()
-            .into{ ch_read_files_fastqc; ch_read_files_count }
-} else {
-    Channel.from( ch_metadata )
-            .splitCsv(header: true, sep:'\t')
-            .map { col -> tuple("${col.GEM}", "${col.Sample}", "${col.Lane}", file("${col.R1}", checkifExists: true),file("${col.R2}", checkifExists: true)) }
-            .dump()
-            .into{ ch_read_files_fastqc; ch_read_files_count }
-}
+Channel.from( ch_metadata )
+  .splitCsv(header: true, sep:'\t')
+  .map { col -> tuple("${col.GEM}", "${col.Sample}", "${col.Lane}", file("${col.R1}", checkifExists: true),file("${col.R2}", checkifExists: true)) }
+  .dump()
+  .into{ ch_read_files_fastqc; ch_read_files_count }
 
 // Handle reference channels
 if (params.prebuilt_reference){
@@ -166,7 +158,7 @@ process get_software_versions {
     """
 }
 
-/* 
+/*
  * STEP 0 A - GetReferences
  */
 process get_references {
@@ -186,15 +178,15 @@ process get_references {
     if (params.genome == 'GRCh38') {
         """
         wget https://cf.10xgenomics.com/supp/cell-exp/refdata-cellranger-GRCh38-3.0.0.tar.gz
-        """ 
+        """
     } else if ( params.genome == 'mm10' ) {
         """
         wget https://cf.10xgenomics.com/supp/cell-exp/refdata-gex-mm10-2020-A.tar.gz
-        """ 
+        """
     }
 }
 
-/* 
+/*
  * STEP 0 B - BuildReferences
  */
 process build_references {
@@ -219,12 +211,12 @@ process build_references {
         $gtf \
         '${gtf.baseName}.filtered.gtf' \
         --attribute=gene_biotype:protein_coding
-    
+
     cellranger mkref \
         --genome=${params.reference_name} \
         --fasta=${fasta} \
         --genes=${gtf}
-    """ 
+    """
 }
 
 /*
@@ -246,7 +238,7 @@ process fastqc {
 
     script:
     """
-    fastqc --quiet --threads $task.cpus ${R1} ${R2} 
+    fastqc --quiet --threads $task.cpus ${R1} ${R2}
     """
 }
 
